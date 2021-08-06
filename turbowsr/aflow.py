@@ -12,6 +12,15 @@ table = str.maketrans('', '', digits)
 
 
 def get_proto_chemsys_params_from_struct(struct, aflow_executable=AFLOW_EXECUTABLE):
+    """[summary]
+
+    Args:
+        struct (Structure): pymatgen Structure
+        aflow_executable (PATH, optional): path to aflow executable. Defaults to AFLOW_EXECUTABLE.
+
+    Returns:
+        a tuple of the prototype, chemsys, params
+    """
     poscar = Poscar(struct)
 
     cmd = f"{aflow_executable} --prototype --print=json cat"
@@ -20,18 +29,31 @@ def get_proto_chemsys_params_from_struct(struct, aflow_executable=AFLOW_EXECUTAB
         cmd, input=poscar.get_string(), text=True, capture_output=True, shell=True
     )
 
-    aflow_proto = json.loads(output.stdout)
+    aflow_dict = json.loads(output.stdout)
 
-    proto = aflow_proto["aflow_prototype_label"]
-    chemsys = proto.split("_")[0].translate(table) + ":" + struct.composition.chemical_system.replace("-", ":")
-    params = dict(zip(aflow_proto["aflow_prototype_params_list"], aflow_proto["aflow_prototype_params_values"]))
+    prototype = aflow_dict["aflow_prototype_label"]
+    chemsys = struct.composition.chemical_system
+    params = dict(zip(aflow_dict["aflow_prototype_params_list"], aflow_dict["aflow_prototype_params_values"]))
 
-    return proto, chemsys, params
+    return prototype, chemsys, params
 
 
-def get_struct_from_proto_chemsys_params(proto, chemsys, params, aflow_executable=AFLOW_EXECUTABLE):
+def get_struct_from_proto_chemsys_params(prototype, chemsys, params, aflow_executable=AFLOW_EXECUTABLE):
+    """[summary]
+
+    Args:
+        prototype (str): structure prototype in aflow format
+        chemsys (str): chemical system in pymatgen format
+        params (dict): dictionary of prototype free-parameters
+        aflow_executable (PATH, optional): path to aflow executable. Defaults to AFLOW_EXECUTABLE.
+
+    Returns:
+       pymatgen Structure reconstucted from prototype and params
+    """
     vals = ",".join(map(str, params.values()))
-    cmd = f"{aflow_executable} --proto={proto}.{chemsys} --params={vals}"
+    chemsys = prototype.split("_")[0].translate(table) + ":" + chemsys.replace("-", ":")
+
+    cmd = f"{aflow_executable} --proto={prototype}.{chemsys} --params={vals}"
 
     output = subprocess.run(cmd, text=True, capture_output=True, shell=True)
 
