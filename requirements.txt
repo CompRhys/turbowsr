@@ -1,0 +1,3 @@
+pymatgen
+megnet
+git+https://github.com/uber-research/TuRBO
