@@ -6,13 +6,13 @@ from pymatgen.core.structure import Structure
 from pymatgen.io.vasp import Poscar
 
 
-AFLOW_EXECUTABLE = "~/src/AFLOW/aflow"
+AFLOW_EXECUTABLE = "aflow"
 
 table = str.maketrans('', '', digits)
 
 
 def get_proto_chemsys_params_from_struct(struct, aflow_executable=AFLOW_EXECUTABLE):
-    """[summary]
+    """get prototype and parameters for pymatgen structure
 
     Args:
         struct (Structure): pymatgen Structure
@@ -39,7 +39,7 @@ def get_proto_chemsys_params_from_struct(struct, aflow_executable=AFLOW_EXECUTAB
 
 
 def get_struct_from_proto_chemsys_params(prototype, chemsys, params, aflow_executable=AFLOW_EXECUTABLE):
-    """[summary]
+    """get pymatgen structure given prototype and parameterss
 
     Args:
         prototype (str): structure prototype in aflow format
@@ -63,7 +63,7 @@ def get_struct_from_proto_chemsys_params(prototype, chemsys, params, aflow_execu
 if __name__ == "__main__":
         from pymatgen.analysis.structure_matcher import StructureMatcher
 
-        s = Structure.from_file("/home/reag2/PhD/turbowsr/POSCAR.mp-554710_AgAsC4S8(N2F3)2")
+        s = Structure.from_file("/home/reag2/PhD/turbowsr/turbowsr/tests/POSCAR.mp-554710_AgAsC4S8(N2F3)2")
 
         sm = StructureMatcher()
         print(sm.fit(s, get_struct_from_proto_chemsys_params(*get_proto_chemsys_params_from_struct(s))))
