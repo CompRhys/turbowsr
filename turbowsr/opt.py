@@ -9,6 +9,12 @@ from turbowsr.aflow import (
 
 
 class TuRBOWSR:
+    """[summary]
+
+    Args:
+        initial_struct ([type]): [description]
+        model ([type]): [description]
+    """
 
     LATTICE_BOUNDS = {"a": 50, "b/a": 10, "c/a": 10, "alpha": 360, "beta": 360, "gamma": 360}
 
@@ -23,9 +29,21 @@ class TuRBOWSR:
 
         self.dim = len(self.params)
         self.lb = np.zeros(self.dim)
-        self.ub = np.array([TuRBOWSR.LATTICE_BOUNDS[k] if k in TuRBOWSR.LATTICE_BOUNDS.keys() else 1 for k in self.params.keys()])
+        self.lb[0] = 1  # set the minimum for a lattice parameter to 1 \AA
+        self.ub = np.array([
+            TuRBOWSR.LATTICE_BOUNDS[k] if k in TuRBOWSR.LATTICE_BOUNDS.keys() else 1
+            for k in self.params.keys()
+        ])
 
     def __call__(self, x):
+        """Evaluate the machine learning model for a set of structural parameters
+
+        Args:
+            x (ndarray): array of trial parameters
+
+        Returns:
+            model prediction to minimise
+        """
         assert len(x) == self.dim
         assert x.ndim == 1
         assert np.all(x <= self.ub) and np.all(x >= self.lb)
@@ -35,7 +53,7 @@ class TuRBOWSR:
         s = get_struct_from_proto_chemsys_params(self.proto, self.chemsys, self.params)
 
         try:
-            return self.model.predict_structure(s)
+            return self.model.predict_structure(s).item()
         except RuntimeError:
             return 999
 
@@ -47,9 +65,10 @@ if __name__ == "__main__":
 
     from megnet.utils.models import load_model
 
-    s = Structure.from_file("/home/reag2/PhD/turbowsr/turbowsr/tests/POSCAR.mp-554710_AgAsC4S8(N2F3)2")
+    # s = Structure.from_file("/home/reag2/PhD/turbowsr/turbowsr/tests/POSCAR.mp-554710_AgAsC4S8(N2F3)2")
+    s = Structure.from_file("/home/reag2/PhD/turbowsr/turbowsr/tests/POSCAR.mp-862972_AcAgAu2")
 
-    model = load_model("Bandgap_MP_2018")
+    model = load_model("Eform_MP_2019")
 
     f = TuRBOWSR(s, model)
 
@@ -58,7 +77,7 @@ if __name__ == "__main__":
         lb=f.lb,  # Numpy array specifying lower bounds
         ub=f.ub,  # Numpy array specifying upper bounds
         n_init=20,  # Number of initial bounds from an Latin hypercube design
-        max_evals=1000,  # Maximum number of evaluations
+        max_evals=100,  # Maximum number of evaluations
         batch_size=10,  # How large batch size TuRBO uses
         verbose=True,  # Print information from each batch
         use_ard=True,  # Set to true if you want to use ARD for the GP kernel
@@ -76,15 +95,15 @@ if __name__ == "__main__":
     ind_best = np.argmin(fX)
     f_best, x_best = fX[ind_best], X[ind_best, :]
 
-    print("Best value found:\n\tf(x) = %.3f\nObserved at:\n\tx = %s" % (f_best, np.around(x_best, 3)))
+    print("Best value found:\n\tf(x) = {f_best:.3f}")
+    print(dict(zip(f.params.keys(), x_best)))
+    print(f.params)
 
     fig = plt.figure(figsize=(7, 5))
     matplotlib.rcParams.update({'font.size': 16})
     plt.plot(fX, 'b.', ms=10)  # Plot all evaluated points as blue dots
     plt.plot(np.minimum.accumulate(fX), 'r', lw=3)  # Plot cumulative minimum as a red line
     plt.xlim([0, len(fX)])
-    plt.ylim([0, 30])
-    plt.title("10D Levy function")
 
     plt.tight_layout()
     plt.show()
