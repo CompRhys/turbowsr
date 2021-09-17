@@ -15,7 +15,20 @@ class TuRBOWSR:
         model ([type]): [description]
     """
 
-    LATTICE_BOUNDS = {"a": 50, "b/a": 10, "c/a": 10, "alpha": 360, "beta": 360, "gamma": 360}
+    LATTICE_LBS = {
+        "a": 1,
+        "b": 1,
+        "c": 1,
+    }
+
+    LATTICE_UBS = {
+        "a": 20,
+        "b": 20,
+        "c": 20,
+        "alpha": 360,
+        "beta": 360,
+        "gamma": 360,
+    }
 
     def __init__(self, initial_struct, model):
         self.initial_struct = initial_struct
@@ -27,12 +40,20 @@ class TuRBOWSR:
         self.model = model
 
         self.dim = len(self.params)
-        self.lb = np.zeros(self.dim)
-        self.lb[0] = 1  # set the minimum for a lattice parameter to 1 \AA
-        self.ub = np.array([
-            TuRBOWSR.LATTICE_BOUNDS[k] if k in TuRBOWSR.LATTICE_BOUNDS.keys() else 1
-            for k in self.params.keys()
-        ])
+
+        self.lb = np.array(
+            [
+                TuRBOWSR.LATTICE_LBS[k] if k in TuRBOWSR.LATTICE_LBS.keys() else 0
+                for k in self.params.keys()
+            ]
+        )
+
+        self.ub = np.array(
+            [
+                TuRBOWSR.LATTICE_UBS[k] if k in TuRBOWSR.LATTICE_UBS.keys() else 1
+                for k in self.params.keys()
+            ]
+        )
 
     def __call__(self, x):
         """Evaluate the machine learning model for a set of structural parameters
