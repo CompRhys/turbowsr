@@ -18,3 +18,4 @@ Setup tbc using conda for everything if possible
 - [ ] Add tests
 - [ ] Add docstrings and notes to code
 - [ ] Implement TuRBO natively using botorch to keep code length minimal (this is for ability to parallelise more easily and reproducibility as TuRBO pip package unsupported)
+- [ ] resolve how to handle errors when MEGNet fails
